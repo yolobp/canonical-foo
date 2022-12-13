@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,17 +17,16 @@ func TestHandleFunc(t *testing.T) {
 		t.Fatalf("http request failed: %v", err)
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("failed to read response: %v", err)
 	}
+	defer resp.Body.Close()
 
-	got := string(b)
 	want := `Your request:
 Method: GET
 `
-
-	if !strings.Contains(got, want) {
+	if got := string(b); !strings.Contains(got, want) {
 		t.Errorf("response got %q want substring %q", got, want)
 	}
 }
