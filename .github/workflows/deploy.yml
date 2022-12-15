@@ -36,7 +36,8 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v1'
       - name: 'gcloud deploy'
         run: |-
-          gcloud deploy releases create ${{ github.ref_name }}-${{ github.run_id }} \
+          REL_PREFIX=$(echo ${{ github.ref_name }} | sed 's/\./-/g')
+          gcloud deploy releases create ${REL_PREFIX}-${{ github.run_id }} \
             --project=cshou-jvs \
             --region=us-central1 \
             --delivery-pipeline=pipeline \
