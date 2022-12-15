@@ -1,0 +1,14 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: hello-svc-prod
+  # namespace = project
+  # In reality, the project differs across envs.
+  namespace: cshou-jvs
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    spec:
+      containers:
+      - image: my-app-image
