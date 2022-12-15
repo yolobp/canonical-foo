@@ -13,3 +13,13 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+### Visual Studio Code IDEA ###
+.vscode
+coverage.out
+
+# Ignore goreleaser output
+dist/
+
+# Ignore google auth action cred file.
+gha-creds-*.json
