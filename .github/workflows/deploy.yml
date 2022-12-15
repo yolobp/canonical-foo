@@ -36,8 +36,8 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v1'
       - name: 'gcloud deploy'
         run: |-
-          gcloud deploy releases create ${{ github.ref }}-${{ github.run_id }} \
+          gcloud deploy releases create ${{ github.ref_name }}-${{ github.run_id }} \
             --project=cshou-jvs \
             --region=us-central1 \
             --delivery-pipeline=pipeline \
-            --images=my-app-image=${{ env.DOCKER_REPO }}/canonical-foo-hello:${{ github.ref }}
+            --images=my-app-image=${{ env.DOCKER_REPO }}/canonical-foo-hello:${{ github.ref_name }}
