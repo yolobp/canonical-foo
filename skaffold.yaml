@@ -1,0 +1,26 @@
+apiVersion: skaffold/v3alpha1
+kind: Config
+metadata: 
+  name: canonical-foo
+build:
+  artifacts:
+  - image: canonical-foo-hello
+    context: .
+    docker:
+      dockerfile: Dockerfile
+      noCache: true
+  tagPolicy:
+    gitCommit: {}
+  local:
+    concurrency: 1
+profiles:
+- name: dev
+  manifests:
+    rawYaml:
+    - deploy/run-dev.yaml
+- name: prod
+  manifests:
+    rawYaml:
+    - deploy/run-prod.yaml
+deploy:
+  cloudrun: {}
