@@ -26,12 +26,14 @@ func (p *fakeProcessor) Process(_ context.Context, m *structpb.Struct) error {
 	return nil
 }
 
+// Example of Handler initialization.
+// I could replace *structpb.Struct with any other proto message type.
 func TestHandler(t *testing.T) {
 	h := NewHandler([]Processor[*structpb.Struct]{&fakeProcessor{}})
 	if err := h.Do(context.Background(), ""); err != nil {
 		t.Error(err)
 	}
 
-	// This fails.
+	// This fails because string is not a proto message.
 	// h2 := NewHandler([]Processor[string]{})
 }
