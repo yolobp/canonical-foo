@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -60,7 +61,7 @@ func NewHandler[T any, P ProtoMessageWrapper[T]](ps []Processor[P]) *Handler[T, 
 	}
 }
 
-func (h *Handler[T, P]) Do(ctx context.Context, path string) error {
+func (h *Handler[T, P]) Do(ctx context.Context, _ string) error {
 	// Common logic to read yaml bytes from somewhere.
 
 	// Here we use fake data.
@@ -87,5 +88,55 @@ isOK: true`)
 	// 	return err
 	// }
 	// send things to downstream.
+	return nil
+}
+
+// Control group
+
+type Processor2 interface {
+	Process(context.Context, proto.Message) error
+}
+
+type Handler2 struct {
+	t          proto.Message // The type we will process in this handler.
+	processors []Processor2
+}
+
+func NewHandler2(t proto.Message, ps []Processor2) *Handler2 {
+	// This is weird already. I have to know the type first to create one.
+	// Even with reflection.
+	return &Handler2{t: t, processors: ps}
+}
+
+func (h *Handler2) Do(ctx context.Context, _ string) error {
+	// Common logic to read yaml bytes from somewhere.
+
+	// Here we use fake data.
+	yb := []byte(`foo: bar
+abc: xyz
+isOK: true`)
+
+	vPtr := reflect.New(reflect.TypeOf(h.t).Elem())
+	nv, ok := vPtr.Interface().(proto.Message)
+	if !ok {
+		return fmt.Errorf("why?!")
+	}
+
+	if err := UnmarshalYAML(yb, nv); err != nil {
+		return err
+	}
+
+	for _, processor := range h.processors {
+		if err := processor.Process(ctx, nv); err != nil {
+			return fmt.Errorf("process error: %w", err)
+		}
+	}
+
+	// jb, err := protojson.Marshal(nv)
+	// if err != nil {
+	// 	return err
+	// }
+	// // send things to downstream.
+	// return fmt.Errorf("inject: %v", string(jb))
 	return nil
 }
