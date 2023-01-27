@@ -1,0 +1,66 @@
+name: 'rollout'
+
+on:
+  workflow_dispatch:
+
+env:
+  # .goreleaser.docker.yaml reads DOCKER_REPO
+  DOCKER_REPO: 'us-docker.pkg.dev/cshou-jvs/rel-images'
+  WIF_PROVIDER: 'projects/151890305035/locations/global/workloadIdentityPools/canonical-foo-ci/providers/canonical-foo-ci-provider'
+  WIF_SERVICE_ACCOUNT: 'canonical-foo-ci@cshou-jvs.iam.gserviceaccount.com'
+
+# Don't cancel in progress since we don't want to have half-baked release.
+concurrency: '${{ github.workflow }}-${{ github.head_ref || github.ref }}-rollout'
+
+jobs:
+  deploy-dev:
+    runs-on: 'ubuntu-latest'
+    environment:
+      name: dev
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - uses: 'actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8' # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@c4799db9111fba4461e9f9da8732e5057b394f72' # ratchet:google-github-actions/auth@v0
+        with:
+          workload_identity_provider: '${{ env.WIF_PROVIDER }}'
+          service_account: '${{ env.WIF_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+      - name: 'gcloud deploy'
+        run: |-
+          gcloud run deploy hello-svc-dev --region=us-central1 \
+            --image=${{ env.DOCKER_REPO }}/canonical-foo-hello:${{ github.ref_name }} \
+            --set-env-vars="ENV_NAME=${{ vars.ENV_NAME }}"
+
+  deploy-prod:
+    runs-on: 'ubuntu-latest'
+    environment:
+      name: prod
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - uses: 'actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8' # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@c4799db9111fba4461e9f9da8732e5057b394f72' # ratchet:google-github-actions/auth@v0
+        with:
+          workload_identity_provider: '${{ env.WIF_PROVIDER }}'
+          service_account: '${{ env.WIF_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+      - name: 'gcloud deploy'
+        run: |-
+          gcloud run deploy hello-svc-prod --region=us-central1 \
+            --image=${{ env.DOCKER_REPO }}/canonical-foo-hello:${{ github.ref_name }} \
+            --set-env-vars="ENV_NAME=${{ vars.ENV_NAME }}"
